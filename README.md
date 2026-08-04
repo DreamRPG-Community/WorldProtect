@@ -1,48 +1,38 @@
 # WorldProtect
 
-WorldProtect gives every loaded Bukkit world an independent protection file.
-World configuration is created below `plugins/WorldProtect/worlds/` when the
-world loads, including worlds loaded dynamically by WorldManager.
+Paper 1.12.2 plugin for per-world block and environment protection with a
+temporary edit mode. Requires `Lib`; integrates with `WorldManager` when it is
+installed.
 
-The `world-defaults` section in `config.yml` is the template for new or
-incomplete world files. Each world can override its own interaction and
-command policies in its generated YAML file. A policy supports `disabled`,
-`blacklist`, and `whitelist` modes. In blacklist mode listed values are
-blocked. In whitelist mode unlisted values are blocked.
+## Configuration
 
-The generated world files use the same shape as the defaults:
+World files are stored at `plugins/WorldProtect/worlds/<world>.yml`.
+`world-defaults` in `config.yml` seeds new or incomplete files; existing values
+remain unchanged when defaults are edited.
 
-```yaml
-rules:
-  block-placement: true
-  block-breaking: true
-  explosion-block-damage: true
+- `rules`: protection switches; `true` blocks the named action
+- `interact`: block ID policy
+- `commands`: command-name policy
+- List policies support `disabled`, `blacklist`, and `whitelist`
 
-interact:
-  mode: disabled
-  block-ids: [54, 58, 61]
+## Commands
 
-commands:
-  mode: blacklist
-  names: [pl, plugins]
+```text
+/worldprotect reload
+/wp reload
+/edit
 ```
 
-Every `rules` value is explicit: `true` blocks the named action. The `interact`
-section controls block interactions only. For the list policies, `disabled`
-allows everything, `blacklist` blocks listed values, and `whitelist` allows only
-listed values. Only the keys shown in the current configuration are read;
-unknown keys are ignored.
+`/worldprotect reload` requires `worldprotect.admin`. `/edit` requires
+`worldprotect.edit` and toggles temporary building mode for the player.
 
-Commands:
+Other plugins can access the read-only `WorldProtectApi` through Bukkit's
+service manager.
 
-- `/worldprotect reload` (alias: `/wp reload`) reloads the global and loaded-world configuration.
-- `/edit` toggles temporary building mode.
+## Build
 
-Players need the temporary `/edit` mode to place or break blocks in worlds
-where those protections are enabled. Edit mode is held only in memory and is
-cleared when a player leaves or the plugin is disabled.
+Requires JDK 21.
 
-Other plugins can obtain the read-only `WorldProtectApi` through Bukkit's
-service manager. Its `find(World)` method returns an immutable policy only for
-currently loaded worlds; configuration mutation and `/edit` state remain
-internal to WorldProtect.
+```powershell
+.\gradlew.bat clean build check --warning-mode all
+```
