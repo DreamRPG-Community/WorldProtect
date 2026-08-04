@@ -1,0 +1,196 @@
+package cn.mythicland.worldprotect;
+
+import cn.mythicland.lib.command.VanillaCommandMessages;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
+
+import java.util.Locale;
+
+/**
+ * Applies the cached policy for each world to Bukkit events.
+ *
+ * <p>Bukkit discovers the public event methods reflectively through {@link EventHandler}, so
+ * IntelliJ cannot see their call sites.</p>
+ */
+@SuppressWarnings("unused")
+final class WorldProtectListener implements Listener {
+
+    private static final String ACTION_DENIED_MESSAGE = VanillaCommandMessages.red("该世界禁止此操作。");
+
+    private final WorldConfigStore worldConfigs;
+    private final EditModeTracker editModes;
+    private final WorldManagerIntegration worldManager;
+
+    WorldProtectListener(
+            WorldConfigStore worldConfigs,
+            EditModeTracker editModes,
+            WorldManagerIntegration worldManager
+    ) {
+        this.worldConfigs = worldConfigs;
+        this.editModes = editModes;
+        this.worldManager = worldManager;
+    }
+
+    @EventHandler
+    public void onWorldLoad(WorldLoadEvent event) {
+        worldConfigs.load(
+                event.getWorld(),
+                worldManager.logicalNameOrBukkitName(event.getWorld())
+        );
+    }
+
+    @EventHandler
+    public void onWorldUnload(WorldUnloadEvent event) {
+        worldConfigs.unload(event.getWorld());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        WorldProtectionRules rules = worldConfigs.get(event.getBlock().getWorld());
+        if (!rules.blockPlace() || editModes.isEnabled(event.getPlayer().getUniqueId())) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        WorldProtectionRules rules = worldConfigs.get(event.getBlock().getWorld());
+        if (!rules.blockBreak() || editModes.isEnabled(event.getPlayer().getUniqueId())) return;
+        event.setCancelled(true);
+    }
+
+    // Numeric block IDs match the block identifiers accepted by the configuration.
+    @SuppressWarnings("deprecation")
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (!event.hasBlock()) return;
+        WorldProtectionRules rules = worldConfigs.get(event.getPlayer().getWorld());
+        Block clickedBlock = event.getClickedBlock();
+        if (clickedBlock == null || !rules.blocksInteraction(clickedBlock.getTypeId())) {
+            return;
+        }
+        denyAction(event.getPlayer());
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBucketFill(PlayerBucketFillEvent event) {
+        denyBucket(event.getPlayer(), event.getPlayer().getWorld(), event);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBucketEmpty(PlayerBucketEmptyEvent event) {
+        denyBucket(event.getPlayer(), event.getPlayer().getWorld(), event);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onLeavesDecay(LeavesDecayEvent event) {
+        if (worldConfigs.get(event.getBlock().getWorld()).leafDecay()) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockFade(BlockFadeEvent event) {
+        if (worldConfigs.get(event.getBlock().getWorld()).blockFade()) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockIgnite(BlockIgniteEvent event) {
+        WorldProtectionRules rules = worldConfigs.get(event.getBlock().getWorld());
+        boolean protectedCause = event.getCause() == BlockIgniteEvent.IgniteCause.SPREAD
+                ? rules.fireSpread()
+                : rules.blockIgnite();
+        if (protectedCause) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockSpread(BlockSpreadEvent event) {
+        if (event.getNewState().getType() == Material.FIRE
+                && worldConfigs.get(event.getBlock().getWorld()).fireSpread()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockBurn(BlockBurnEvent event) {
+        if (worldConfigs.get(event.getBlock().getWorld()).fireSpread()) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        if (worldConfigs.get(event.getLocation().getWorld()).explosions()) event.blockList().clear();
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        if (worldConfigs.get(event.getBlock().getWorld()).explosions()) event.blockList().clear();
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onFallDamage(EntityDamageEvent event) {
+        if (event.getEntityType() != EntityType.PLAYER
+                || event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
+        if (worldConfigs.get(event.getEntity().getWorld()).fallDamage()) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
+        if (event.getEntityType() != EntityType.ENDER_PEARL
+                || !(event.getEntity().getShooter() instanceof Player player)) return;
+        if (worldConfigs.get(player.getWorld()).enderPearl()) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onCommand(PlayerCommandPreprocessEvent event) {
+        WorldProtectionRules rules = worldConfigs.get(event.getPlayer().getWorld());
+        String command = commandName(event.getMessage());
+        if (command.isBlank() || command.equals("edit") || !rules.blocksCommand(command)) return;
+        denyAction(event.getPlayer());
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        editModes.remove(event.getPlayer().getUniqueId());
+    }
+
+    private void denyBucket(Player player, World world, Cancellable event) {
+        if (!worldConfigs.get(world).bucket()) return;
+        denyAction(player);
+        event.setCancelled(true);
+    }
+
+    private void denyAction(Player player) {
+        player.sendMessage(ACTION_DENIED_MESSAGE);
+    }
+
+    private String commandName(String message) {
+        if (message == null || !message.startsWith("/")) return "";
+        String body = message.substring(1).trim();
+        if (body.isBlank()) return "";
+        return body.split("\\s+", 2)[0].toLowerCase(Locale.ROOT);
+    }
+}
