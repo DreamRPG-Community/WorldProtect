@@ -17,7 +17,7 @@ public interface WorldProtectionPolicy {
      * Returns the user-facing logical name used for this world configuration.
      *
      * @return the logical world name, or the Bukkit world name when no external world manager
-     *         supplied a logical name
+     * supplied a logical name
      */
     String logicalName();
 
@@ -54,10 +54,9 @@ public interface WorldProtectionPolicy {
     }
 
     /**
-     * @deprecated Use {@link #interactionPolicy()} to inspect the selected mode and entries. The
-     *             returned set contains the configured block IDs.
-     *
      * @return an immutable set of block IDs used by the configured policy
+     * @deprecated Use {@link #interactionPolicy()} to inspect the selected mode and entries. The
+     * returned set contains the configured block IDs.
      */
     @Deprecated
     default Set<Integer> allowedInteractBlockIds() {
@@ -117,10 +116,9 @@ public interface WorldProtectionPolicy {
     ListPolicy<String> commandPolicy();
 
     /**
-     * @deprecated Use {@link #commandPolicy()} to inspect the selected mode and entries. The
-     *             returned set contains the configured command names.
-     *
      * @return an immutable, lower-case set of command names without a leading slash
+     * @deprecated Use {@link #commandPolicy()} to inspect the selected mode and entries. The
+     * returned set contains the configured command names.
      */
     @Deprecated
     default Set<String> blockedCommands() {
@@ -132,7 +130,7 @@ public interface WorldProtectionPolicy {
      *
      * @param command the command name, with or without a leading slash
      * @return {@code true} when the command is configured for interception; {@code false} for
-     *         null, blank, or unconfigured command names
+     * null, blank, or unconfigured command names
      */
     boolean blocksCommand(String command);
 }

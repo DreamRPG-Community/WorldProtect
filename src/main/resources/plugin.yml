@@ -2,14 +2,14 @@ name: WorldProtect
 version: ${version}
 main: cn.mythicland.worldprotect.WorldProtectPlugin
 load: POSTWORLD
-depend: [Lib]
-softdepend: [WorldManager]
+depend: [ Lib ]
+softdepend: [ WorldManager ]
 description: Per-world block and environment protection with an explicit edit mode.
 
 commands:
   worldprotect:
     description: Reload WorldProtect configuration and show command help.
-    aliases: [wp]
+    aliases: [ wp ]
   edit:
     description: Toggle temporary building mode.
 

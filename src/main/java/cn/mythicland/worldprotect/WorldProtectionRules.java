@@ -1,7 +1,7 @@
 package cn.mythicland.worldprotect;
 
-import cn.mythicland.lib.policy.ListPolicy;
 import cn.mythicland.lib.policy.ListMode;
+import cn.mythicland.lib.policy.ListPolicy;
 
 import java.util.Locale;
 import java.util.Objects;

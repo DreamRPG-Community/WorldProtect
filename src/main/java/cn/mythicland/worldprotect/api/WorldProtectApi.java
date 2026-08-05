@@ -18,7 +18,7 @@ public interface WorldProtectApi {
      *
      * @param world the loaded Bukkit world to inspect; {@code null} returns an empty result
      * @return the immutable policy for the world, or empty when the world is not managed by
-     *         the active WorldProtect instance
+     * the active WorldProtect instance
      */
     Optional<WorldProtectionPolicy> find(World world);
 }

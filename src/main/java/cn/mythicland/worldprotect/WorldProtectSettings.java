@@ -96,9 +96,9 @@ final class WorldProtectSettings {
     private static Set<Integer> readIntegerSet(
             JavaPlugin plugin,
             FileConfiguration configuration,
-            String path,
             Set<Integer> defaultValue
     ) {
+        String path = "world-defaults.interact.block-ids";
         if (!configuration.contains(path)) {
             configuration.set(path, List.copyOf(defaultValue));
             plugin.saveConfig();
@@ -148,7 +148,6 @@ final class WorldProtectSettings {
         Set<Integer> entries = readIntegerSet(
                 plugin,
                 configuration,
-                "world-defaults.interact.block-ids",
                 defaultPolicy.entries()
         );
         return new ListPolicy<>(mode, entries);
@@ -168,7 +167,6 @@ final class WorldProtectSettings {
         Set<String> entries = readCommandSet(
                 plugin,
                 configuration,
-                "world-defaults.commands.names",
                 defaultPolicy.entries()
         );
         return new ListPolicy<>(mode, entries);
@@ -200,9 +198,9 @@ final class WorldProtectSettings {
     private static Set<String> readCommandSet(
             JavaPlugin plugin,
             FileConfiguration configuration,
-            String path,
             Set<String> defaultValue
     ) {
+        String path = "world-defaults.commands.names";
         if (!configuration.contains(path)) {
             configuration.set(path, List.copyOf(defaultValue));
             plugin.saveConfig();

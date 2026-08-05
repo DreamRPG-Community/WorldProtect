@@ -10,16 +10,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,10 +22,10 @@ import java.util.logging.Logger;
 final class WorldConfigStore {
 
     private final Logger logger;
-    private volatile WorldProtectionRules defaults;
-    private volatile WorldConfigFileResolver fileResolver;
     private final Map<UUID, WorldProtectionRules> rulesByWorld = new ConcurrentHashMap<>();
     private final Map<UUID, String> logicalNamesByWorld = new ConcurrentHashMap<>();
+    private volatile WorldProtectionRules defaults;
+    private volatile WorldConfigFileResolver fileResolver;
 
     WorldConfigStore(
             Logger logger,
@@ -125,7 +118,7 @@ final class WorldConfigStore {
         boolean existed = Files.exists(file);
         Files.createDirectories(file.getParent());
         YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file.toFile());
-        boolean[] changed = { !existed };
+        boolean[] changed = {!existed};
 
         boolean blockPlace = readBoolean(
                 configuration,
@@ -229,7 +222,6 @@ final class WorldConfigStore {
         );
         Set<Integer> entries = readIntegerSet(
                 configuration,
-                "interact.block-ids",
                 defaultPolicy.entries(),
                 changed
         );
@@ -249,7 +241,6 @@ final class WorldConfigStore {
         );
         Set<String> entries = readCommandSet(
                 configuration,
-                "commands.names",
                 defaultPolicy.entries(),
                 changed
         );
@@ -290,10 +281,10 @@ final class WorldConfigStore {
 
     private Set<Integer> readIntegerSet(
             YamlConfiguration configuration,
-            String path,
             Set<Integer> defaultValue,
             boolean[] changed
     ) {
+        String path = "interact.block-ids";
         Object rawValue = configuration.get(path);
         if (!(rawValue instanceof List<?> values)) {
             reset(configuration, path, List.copyOf(defaultValue), changed,
@@ -315,10 +306,10 @@ final class WorldConfigStore {
 
     private Set<String> readCommandSet(
             YamlConfiguration configuration,
-            String path,
             Set<String> defaultValue,
             boolean[] changed
     ) {
+        String path = "commands.names";
         Object rawValue = configuration.get(path);
         if (!(rawValue instanceof List<?> values)) {
             reset(configuration, path, List.copyOf(defaultValue), changed,
