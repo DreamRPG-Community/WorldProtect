@@ -1,4 +1,4 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.service;
 
 import java.util.Set;
 import java.util.UUID;
@@ -7,25 +7,25 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Holds temporary per-player edit mode state.
  */
-final class EditModeTracker {
+public final class EditModeTracker {
 
     private final Set<UUID> enabledPlayers = ConcurrentHashMap.newKeySet();
 
-    boolean toggle(UUID playerId) {
+    public boolean toggle(UUID playerId) {
         if (enabledPlayers.remove(playerId)) return false;
         enabledPlayers.add(playerId);
         return true;
     }
 
-    boolean isEnabled(UUID playerId) {
+    public boolean isEnabled(UUID playerId) {
         return enabledPlayers.contains(playerId);
     }
 
-    void remove(UUID playerId) {
+    public void remove(UUID playerId) {
         enabledPlayers.remove(playerId);
     }
 
-    void clear() {
+    public void clear() {
         enabledPlayers.clear();
     }
 }

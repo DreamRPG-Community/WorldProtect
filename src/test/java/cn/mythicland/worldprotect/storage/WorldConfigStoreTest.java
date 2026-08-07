@@ -1,9 +1,11 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.storage;
 
 import cn.mythicland.lib.policy.ListMode;
 import cn.mythicland.lib.policy.ListPolicy;
 import cn.mythicland.worldprotect.api.WorldProtectApi;
 import cn.mythicland.worldprotect.api.WorldProtectionPolicy;
+import cn.mythicland.worldprotect.policy.WorldProtectionRules;
+import cn.mythicland.worldprotect.service.WorldProtectService;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
@@ -124,6 +126,7 @@ class WorldConfigStoreTest {
 
         assertEquals("arena", policy.logicalName());
         assertTrue(policy.blockPlace());
+        assertTrue(policy.naturalMobSpawning());
         assertTrue(policy.blocksCommand("/TELL"));
         assertThrows(
                 UnsupportedOperationException.class,
@@ -177,6 +180,7 @@ class WorldConfigStoreTest {
                 .explosions(true)
                 .fallDamage(true)
                 .enderPearl(false)
+                .naturalMobSpawning(true)
                 .commandPolicy(new ListPolicy<>(ListMode.BLACKLIST, Set.of("tell")))
                 .build();
     }

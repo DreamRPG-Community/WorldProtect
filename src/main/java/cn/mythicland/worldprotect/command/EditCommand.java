@@ -1,8 +1,12 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.command;
 
 import cn.mythicland.lib.command.CommandUsageException;
 import cn.mythicland.lib.command.Subcommand;
 import cn.mythicland.lib.command.VanillaCommandMessages;
+import cn.mythicland.worldprotect.config.WorldProtectSettings;
+import cn.mythicland.worldprotect.integration.worldmanager.WorldManagerIntegration;
+import cn.mythicland.worldprotect.service.EditModeTracker;
+import cn.mythicland.worldprotect.storage.WorldConfigStore;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -11,7 +15,7 @@ import java.util.List;
 /**
  * Toggles temporary building mode for a player.
  */
-final class EditCommand implements Subcommand {
+public final class EditCommand implements Subcommand {
 
     private static final String ONLY_PLAYER_MESSAGE = VanillaCommandMessages.red("该命令只能由玩家执行。");
     private static final String ENABLED_MESSAGE = VanillaCommandMessages.green("建筑模式已开启。");
@@ -26,7 +30,7 @@ final class EditCommand implements Subcommand {
     private final WorldManagerIntegration worldManager;
     private WorldProtectSettings settings;
 
-    EditCommand(
+    public EditCommand(
             WorldProtectSettings settings,
             EditModeTracker editModes,
             WorldConfigStore worldConfigs,
@@ -38,7 +42,7 @@ final class EditCommand implements Subcommand {
         this.worldManager = worldManager;
     }
 
-    void updateSettings(WorldProtectSettings newSettings) {
+    public void updateSettings(WorldProtectSettings newSettings) {
         this.settings = newSettings;
     }
 

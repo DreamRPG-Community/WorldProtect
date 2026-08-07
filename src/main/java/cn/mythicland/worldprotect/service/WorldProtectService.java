@@ -1,7 +1,8 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.service;
 
 import cn.mythicland.worldprotect.api.WorldProtectApi;
 import cn.mythicland.worldprotect.api.WorldProtectionPolicy;
+import cn.mythicland.worldprotect.storage.WorldConfigStore;
 import org.bukkit.World;
 
 import java.util.Optional;
@@ -9,11 +10,11 @@ import java.util.Optional;
 /**
  * Bukkit service implementation for the public WorldProtect API.
  */
-final class WorldProtectService implements WorldProtectApi {
+public final class WorldProtectService implements WorldProtectApi {
 
     private final WorldConfigStore worldConfigs;
 
-    WorldProtectService(WorldConfigStore worldConfigs) {
+    public WorldProtectService(WorldConfigStore worldConfigs) {
         this.worldConfigs = worldConfigs;
     }
 

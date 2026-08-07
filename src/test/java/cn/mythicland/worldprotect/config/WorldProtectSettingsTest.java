@@ -1,5 +1,6 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.config;
 
+import cn.mythicland.worldprotect.policy.WorldProtectionRules;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

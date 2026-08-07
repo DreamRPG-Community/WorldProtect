@@ -1,17 +1,18 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.service;
 
 import cn.mythicland.lib.policy.ListPolicy;
 import cn.mythicland.worldprotect.api.WorldProtectionPolicy;
+import cn.mythicland.worldprotect.policy.WorldProtectionRules;
 
 /**
  * Adds the logical world name to the internal immutable protection rules.
  */
-final class WorldProtectionPolicyView implements WorldProtectionPolicy {
+public final class WorldProtectionPolicyView implements WorldProtectionPolicy {
 
     private final String logicalName;
     private final WorldProtectionRules rules;
 
-    WorldProtectionPolicyView(String logicalName, WorldProtectionRules rules) {
+    public WorldProtectionPolicyView(String logicalName, WorldProtectionRules rules) {
         this.logicalName = logicalName;
         this.rules = rules;
     }
@@ -79,6 +80,11 @@ final class WorldProtectionPolicyView implements WorldProtectionPolicy {
     @Override
     public boolean enderPearl() {
         return rules.enderPearl();
+    }
+
+    @Override
+    public boolean naturalMobSpawning() {
+        return rules.naturalMobSpawning();
     }
 
     @Override

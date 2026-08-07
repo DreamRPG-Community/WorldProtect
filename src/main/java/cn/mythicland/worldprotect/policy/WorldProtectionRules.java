@@ -1,4 +1,4 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.policy;
 
 import cn.mythicland.lib.policy.ListMode;
 import cn.mythicland.lib.policy.ListPolicy;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 /**
  * Immutable protection policy for one Bukkit world.
  */
-final class WorldProtectionRules {
+public final class WorldProtectionRules {
 
     private final boolean blockPlace;
     private final boolean blockBreak;
@@ -24,6 +24,7 @@ final class WorldProtectionRules {
     private final boolean explosions;
     private final boolean fallDamage;
     private final boolean enderPearl;
+    private final boolean naturalMobSpawning;
     private final ListPolicy<String> commandPolicy;
 
     private WorldProtectionRules(Builder builder) {
@@ -38,13 +39,14 @@ final class WorldProtectionRules {
         this.explosions = builder.explosions;
         this.fallDamage = builder.fallDamage;
         this.enderPearl = builder.enderPearl;
+        this.naturalMobSpawning = builder.naturalMobSpawning;
         Set<String> normalizedCommands = builder.commandPolicy.entries().stream()
                 .map(command -> command.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toUnmodifiableSet());
         this.commandPolicy = new ListPolicy<>(builder.commandPolicy.mode(), normalizedCommands);
     }
 
-    static Builder builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
@@ -100,6 +102,15 @@ final class WorldProtectionRules {
         return enderPearl;
     }
 
+    /**
+     * Returns whether natural and chunk-generation creature spawning is protected.
+     *
+     * @return true when natural creature spawning should be blocked
+     */
+    public boolean naturalMobSpawning() {
+        return naturalMobSpawning;
+    }
+
     public boolean commandProtection() {
         return commandPolicy.mode() != ListMode.DISABLED;
     }
@@ -117,7 +128,7 @@ final class WorldProtectionRules {
     /**
      * Named construction API for the policy's many independent switches.
      */
-    static final class Builder {
+    public static final class Builder {
 
         private boolean blockPlace;
         private boolean blockBreak;
@@ -133,72 +144,78 @@ final class WorldProtectionRules {
         private boolean explosions;
         private boolean fallDamage;
         private boolean enderPearl;
+        private boolean naturalMobSpawning;
         private ListPolicy<String> commandPolicy = new ListPolicy<>(
                 ListMode.BLACKLIST,
                 Set.of()
         );
 
-        Builder blockPlace(boolean value) {
+        public Builder blockPlace(boolean value) {
             blockPlace = value;
             return this;
         }
 
-        Builder blockBreak(boolean value) {
+        public Builder blockBreak(boolean value) {
             blockBreak = value;
             return this;
         }
 
-        Builder interactionPolicy(ListPolicy<Integer> value) {
+        public Builder interactionPolicy(ListPolicy<Integer> value) {
             interactionPolicy = Objects.requireNonNull(value, "interactionPolicy");
             return this;
         }
 
-        Builder bucket(boolean value) {
+        public Builder bucket(boolean value) {
             bucket = value;
             return this;
         }
 
-        Builder leafDecay(boolean value) {
+        public Builder leafDecay(boolean value) {
             leafDecay = value;
             return this;
         }
 
-        Builder blockFade(boolean value) {
+        public Builder blockFade(boolean value) {
             blockFade = value;
             return this;
         }
 
-        Builder blockIgnite(boolean value) {
+        public Builder blockIgnite(boolean value) {
             blockIgnite = value;
             return this;
         }
 
-        Builder fireSpread(boolean value) {
+        public Builder fireSpread(boolean value) {
             fireSpread = value;
             return this;
         }
 
-        Builder explosions(boolean value) {
+        public Builder explosions(boolean value) {
             explosions = value;
             return this;
         }
 
-        Builder fallDamage(boolean value) {
+        public Builder fallDamage(boolean value) {
             fallDamage = value;
             return this;
         }
 
-        Builder enderPearl(boolean value) {
+        public Builder enderPearl(boolean value) {
             enderPearl = value;
             return this;
         }
 
-        Builder commandPolicy(ListPolicy<String> value) {
+        public Builder naturalMobSpawning(boolean value) {
+            naturalMobSpawning = value;
+            return this;
+        }
+
+        public Builder commandPolicy(ListPolicy<String> value) {
             commandPolicy = Objects.requireNonNull(value, "commandPolicy");
             return this;
         }
 
-        WorldProtectionRules build() {
+        public WorldProtectionRules build() {
             return new WorldProtectionRules(this);
         }
     }

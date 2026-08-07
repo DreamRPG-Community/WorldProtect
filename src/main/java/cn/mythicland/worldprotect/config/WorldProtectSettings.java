@@ -1,8 +1,9 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.config;
 
 import cn.mythicland.lib.config.ConfigSupport;
 import cn.mythicland.lib.policy.ListMode;
 import cn.mythicland.lib.policy.ListPolicy;
+import cn.mythicland.worldprotect.policy.WorldProtectionRules;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,7 +15,7 @@ import java.util.Set;
 /**
  * Global WorldProtect settings and the template used for new worlds.
  */
-final class WorldProtectSettings {
+public final class WorldProtectSettings {
 
     private final String worldConfigDirectory;
     private final String editPermission;
@@ -26,11 +27,11 @@ final class WorldProtectSettings {
         worldDefaults = Objects.requireNonNull(builder.worldDefaults, "worldDefaults");
     }
 
-    static Builder builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
-    static WorldProtectSettings load(JavaPlugin plugin, FileConfiguration configuration) {
+    public static WorldProtectSettings load(JavaPlugin plugin, FileConfiguration configuration) {
         String worldConfigDirectory = ConfigSupport.getString(
                 plugin,
                 configuration,
@@ -70,6 +71,8 @@ final class WorldProtectSettings {
                         plugin, configuration, "world-defaults.rules.player-fall-damage", true))
                 .enderPearl(readBoolean(
                         plugin, configuration, "world-defaults.rules.ender-pearl-launch", false))
+                .naturalMobSpawning(readBoolean(
+                        plugin, configuration, "world-defaults.rules.natural-mob-spawning", false))
                 .commandPolicy(readCommandPolicy(
                         plugin,
                         configuration,
@@ -252,43 +255,43 @@ final class WorldProtectSettings {
         return value;
     }
 
-    String worldConfigDirectory() {
+    public String worldConfigDirectory() {
         return worldConfigDirectory;
     }
 
-    String editPermission() {
+    public String editPermission() {
         return editPermission;
     }
 
-    WorldProtectionRules worldDefaults() {
+    public WorldProtectionRules worldDefaults() {
         return worldDefaults;
     }
 
     /**
      * Named construction API for global settings and the world defaults template.
      */
-    static final class Builder {
+    public static final class Builder {
 
         private String worldConfigDirectory;
         private String editPermission;
         private WorldProtectionRules worldDefaults;
 
-        Builder worldConfigDirectory(String value) {
+        public Builder worldConfigDirectory(String value) {
             worldConfigDirectory = value;
             return this;
         }
 
-        Builder editPermission(String value) {
+        public Builder editPermission(String value) {
             editPermission = value;
             return this;
         }
 
-        Builder worldDefaults(WorldProtectionRules value) {
+        public Builder worldDefaults(WorldProtectionRules value) {
             worldDefaults = value;
             return this;
         }
 
-        WorldProtectSettings build() {
+        public WorldProtectSettings build() {
             return new WorldProtectSettings(this);
         }
     }

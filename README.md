@@ -11,6 +11,7 @@ World files are stored at `plugins/WorldProtect/worlds/<world>.yml`.
 remain unchanged when defaults are edited.
 
 - `rules`: protection switches; `true` blocks the named action
+- `rules.natural-mob-spawning`: blocks creature spawning from natural spawning and chunk generation
 - `interact`: block ID policy
 - `commands`: command-name policy
 - List policies support `disabled`, `blacklist`, and `whitelist`

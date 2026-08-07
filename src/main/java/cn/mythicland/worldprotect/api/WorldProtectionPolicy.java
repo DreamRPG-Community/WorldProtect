@@ -104,6 +104,11 @@ public interface WorldProtectionPolicy {
     boolean enderPearl();
 
     /**
+     * @return whether creature spawning from natural spawning and chunk generation is protected
+     */
+    boolean naturalMobSpawning();
+
+    /**
      * @return whether configured commands are intercepted
      */
     boolean commandProtection();

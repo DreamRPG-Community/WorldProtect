@@ -1,4 +1,4 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.policy;
 
 import cn.mythicland.lib.policy.ListMode;
 import cn.mythicland.lib.policy.ListPolicy;
@@ -26,6 +26,15 @@ class WorldProtectionRulesTest {
 
         assertFalse(rules.blocksInteraction(54));
         assertTrue(rules.blocksInteraction(58));
+    }
+
+    @Test
+    void naturalMobSpawningProtectionCanBeEnabledIndependently() {
+        WorldProtectionRules rules = WorldProtectionRules.builder()
+                .naturalMobSpawning(true)
+                .build();
+
+        assertTrue(rules.naturalMobSpawning());
     }
 
     private WorldProtectionRules rules(Set<String> blockedCommands) {

@@ -19,6 +19,8 @@ world-defaults:
     explosion-block-damage: true
     player-fall-damage: true
     ender-pearl-launch: false
+    # Also blocks creature spawning caused by natural spawning and chunk generation.
+    natural-mob-spawning: false
 
   # disabled allows every block interaction. blacklist blocks listed IDs.
   # whitelist allows only listed IDs.

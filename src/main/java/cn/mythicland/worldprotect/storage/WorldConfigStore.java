@@ -1,8 +1,10 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.storage;
 
 import cn.mythicland.lib.policy.ListMode;
 import cn.mythicland.lib.policy.ListPolicy;
 import cn.mythicland.worldprotect.api.WorldProtectionPolicy;
+import cn.mythicland.worldprotect.policy.WorldProtectionRules;
+import cn.mythicland.worldprotect.service.WorldProtectionPolicyView;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -19,7 +21,7 @@ import java.util.logging.Logger;
 /**
  * Loads and caches the independent YAML policy for every loaded world.
  */
-final class WorldConfigStore {
+public final class WorldConfigStore {
 
     private final Logger logger;
     private final Map<UUID, WorldProtectionRules> rulesByWorld = new ConcurrentHashMap<>();
@@ -27,7 +29,7 @@ final class WorldConfigStore {
     private volatile WorldProtectionRules defaults;
     private volatile WorldConfigFileResolver fileResolver;
 
-    WorldConfigStore(
+    public WorldConfigStore(
             Logger logger,
             WorldProtectionRules defaults,
             WorldConfigFileResolver fileResolver
@@ -37,11 +39,11 @@ final class WorldConfigStore {
         this.fileResolver = fileResolver;
     }
 
-    void ensureRootDirectory() throws IOException {
+    public void ensureRootDirectory() throws IOException {
         fileResolver.ensureRootDirectory();
     }
 
-    WorldProtectionRules load(World world, String logicalName) {
+    public WorldProtectionRules load(World world, String logicalName) {
         Objects.requireNonNull(world, "world");
         Objects.requireNonNull(logicalName, "logicalName");
         String resolvedName = logicalName.isBlank() ? world.getName() : logicalName;
@@ -64,12 +66,12 @@ final class WorldConfigStore {
         }
     }
 
-    WorldProtectionRules get(World world) {
+    public WorldProtectionRules get(World world) {
         WorldProtectionRules cached = rulesByWorld.get(world.getUID());
         return cached == null ? load(world, world.getName()) : cached;
     }
 
-    void reload(
+    public void reload(
             WorldProtectionRules newDefaults,
             WorldConfigFileResolver newFileResolver,
             Collection<World> loadedWorlds,
@@ -85,7 +87,7 @@ final class WorldConfigStore {
         }
     }
 
-    Optional<WorldProtectionPolicy> findPolicy(World world) {
+    public Optional<WorldProtectionPolicy> findPolicy(World world) {
         if (world == null) return Optional.empty();
 
         WorldProtectionRules rules = rulesByWorld.get(world.getUID());
@@ -93,16 +95,16 @@ final class WorldConfigStore {
         return Optional.of(new WorldProtectionPolicyView(logicalName(world), rules));
     }
 
-    String logicalName(World world) {
+    public String logicalName(World world) {
         return logicalNamesByWorld.getOrDefault(world.getUID(), world.getName());
     }
 
-    void unload(World world) {
+    public void unload(World world) {
         rulesByWorld.remove(world.getUID());
         logicalNamesByWorld.remove(world.getUID());
     }
 
-    void clear() {
+    public void clear() {
         rulesByWorld.clear();
         logicalNamesByWorld.clear();
     }
@@ -185,6 +187,12 @@ final class WorldConfigStore {
                 defaults.enderPearl(),
                 changed
         );
+        boolean naturalMobSpawning = readBoolean(
+                configuration,
+                "rules.natural-mob-spawning",
+                defaults.naturalMobSpawning(),
+                changed
+        );
         ListPolicy<String> commandPolicy = readCommandPolicy(
                 configuration,
                 defaults.commandPolicy(),
@@ -203,6 +211,7 @@ final class WorldConfigStore {
                 .explosions(explosions)
                 .fallDamage(fallDamage)
                 .enderPearl(enderPearl)
+                .naturalMobSpawning(naturalMobSpawning)
                 .commandPolicy(commandPolicy)
                 .build();
         if (changed[0]) save(file, configuration);

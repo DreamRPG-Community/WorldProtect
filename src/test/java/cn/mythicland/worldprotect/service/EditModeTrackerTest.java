@@ -1,4 +1,4 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.service;
 
 import org.junit.jupiter.api.Test;
 

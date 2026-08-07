@@ -1,4 +1,4 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.storage;
 
 import cn.mythicland.lib.path.SafePathResolver;
 import org.bukkit.World;
@@ -10,21 +10,21 @@ import java.nio.file.Path;
 /**
  * Resolves one safe configuration file for each Bukkit world.
  */
-final class WorldConfigFileResolver {
+public final class WorldConfigFileResolver {
 
     private final Path root;
     private final SafePathResolver resolver;
 
-    WorldConfigFileResolver(Path root) {
+    public WorldConfigFileResolver(Path root) {
         this.root = root.toAbsolutePath().normalize();
         this.resolver = new SafePathResolver(this.root);
     }
 
-    void ensureRootDirectory() throws IOException {
+    public void ensureRootDirectory() throws IOException {
         resolver.ensureRootDirectory();
     }
 
-    Path resolve(World world, String logicalName) throws IOException {
+    public Path resolve(World world, String logicalName) throws IOException {
         String name = logicalName == null || logicalName.isBlank() ? world.getName() : logicalName;
         try {
             String safeName = resolver.normalizeSingleSegment(name);

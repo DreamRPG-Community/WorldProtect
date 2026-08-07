@@ -1,6 +1,10 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.listener;
 
 import cn.mythicland.lib.command.VanillaCommandMessages;
+import cn.mythicland.worldprotect.integration.worldmanager.WorldManagerIntegration;
+import cn.mythicland.worldprotect.policy.WorldProtectionRules;
+import cn.mythicland.worldprotect.service.EditModeTracker;
+import cn.mythicland.worldprotect.storage.WorldConfigStore;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -11,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
@@ -27,7 +32,7 @@ import java.util.Locale;
  * IntelliJ cannot see their call sites.</p>
  */
 @SuppressWarnings("unused")
-final class WorldProtectListener implements Listener {
+public final class WorldProtectListener implements Listener {
 
     private static final String ACTION_DENIED_MESSAGE = VanillaCommandMessages.red("该世界禁止此操作。");
 
@@ -35,7 +40,7 @@ final class WorldProtectListener implements Listener {
     private final EditModeTracker editModes;
     private final WorldManagerIntegration worldManager;
 
-    WorldProtectListener(
+    public WorldProtectListener(
             WorldConfigStore worldConfigs,
             EditModeTracker editModes,
             WorldManagerIntegration worldManager
@@ -139,6 +144,14 @@ final class WorldProtectListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if (!isNaturalSpawn(event.getSpawnReason())) return;
+        if (worldConfigs.get(event.getLocation().getWorld()).naturalMobSpawning()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onFallDamage(EntityDamageEvent event) {
         if (event.getEntityType() != EntityType.PLAYER
                 || event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
@@ -174,6 +187,11 @@ final class WorldProtectListener implements Listener {
 
     private void denyAction(Player player) {
         player.sendMessage(ACTION_DENIED_MESSAGE);
+    }
+
+    private static boolean isNaturalSpawn(CreatureSpawnEvent.SpawnReason reason) {
+        return reason == CreatureSpawnEvent.SpawnReason.NATURAL
+                || reason == CreatureSpawnEvent.SpawnReason.CHUNK_GEN;
     }
 
     private String commandName(String message) {

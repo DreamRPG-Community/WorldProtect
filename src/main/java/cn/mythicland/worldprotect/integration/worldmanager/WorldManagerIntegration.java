@@ -1,4 +1,4 @@
-package cn.mythicland.worldprotect;
+package cn.mythicland.worldprotect.integration.worldmanager;
 
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
@@ -17,7 +17,7 @@ import java.util.logging.Level;
  * is used here because Bukkit gives each plugin its own class loader and the
  * WorldManager API is unavailable when that plugin is not installed.</p>
  */
-final class WorldManagerIntegration {
+public final class WorldManagerIntegration {
 
     private static final String WORLD_MANAGER_NAME = "WorldManager";
     private static final String API_CLASS_NAME = "cn.mythicland.worldmanager.api.WorldManagerApi";
@@ -28,16 +28,16 @@ final class WorldManagerIntegration {
     private boolean lookupFailed;
     private boolean failureLogged;
 
-    WorldManagerIntegration(JavaPlugin plugin) {
+    public WorldManagerIntegration(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
-    boolean isEnabled() {
+    public boolean isEnabled() {
         Plugin worldManager = plugin.getServer().getPluginManager().getPlugin(WORLD_MANAGER_NAME);
         return worldManager != null && worldManager.isEnabled();
     }
 
-    Optional<String> logicalName(World world) {
+    public Optional<String> logicalName(World world) {
         if (world == null || !isEnabled()) return Optional.empty();
         if (!ensureProvider()) return Optional.empty();
 
@@ -52,7 +52,7 @@ final class WorldManagerIntegration {
         }
     }
 
-    String logicalNameOrBukkitName(World world) {
+    public String logicalNameOrBukkitName(World world) {
         return logicalName(world).orElse(world.getName());
     }
 
