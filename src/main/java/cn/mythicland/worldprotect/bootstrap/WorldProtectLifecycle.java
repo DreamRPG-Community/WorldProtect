@@ -1,58 +1,51 @@
 package cn.mythicland.worldprotect.bootstrap;
 
-import cn.mythicland.lib.api.LibApi;
 import cn.mythicland.lib.bootstrap.LibPluginLifecycle;
-import cn.mythicland.lib.bootstrap.annotation.InjectComponent;
-import cn.mythicland.lib.command.CommandRouter;
+import cn.mythicland.lib.bootstrap.annotation.LifecycleComponent;
+import cn.mythicland.lib.bootstrap.annotation.ServiceComponent;
 import cn.mythicland.lib.config.ConfigSupport;
 import cn.mythicland.worldprotect.WorldProtectPlugin;
 import cn.mythicland.worldprotect.api.WorldProtectApi;
-import cn.mythicland.worldprotect.command.EditCommand;
-import cn.mythicland.worldprotect.command.ReloadCommand;
+import cn.mythicland.worldprotect.api.WorldProtectionPolicy;
 import cn.mythicland.worldprotect.config.WorldProtectSettings;
 import cn.mythicland.worldprotect.integration.worldmanager.WorldManagerIntegration;
 import cn.mythicland.worldprotect.listener.WorldProtectListener;
 import cn.mythicland.worldprotect.service.EditModeTracker;
-import cn.mythicland.worldprotect.service.WorldProtectService;
 import cn.mythicland.worldprotect.storage.WorldConfigFileResolver;
 import cn.mythicland.worldprotect.storage.WorldConfigStore;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.ServicePriority;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Owns WorldProtect construction, listener and command registration, service lifecycle, and reload.
  */
-@InjectComponent
-public final class WorldProtectLifecycle implements LibPluginLifecycle {
+@LifecycleComponent
+@ServiceComponent(WorldProtectApi.class)
+public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldProtectApi {
 
     private static final String DEFAULT_WORLD_CONFIG_DIRECTORY = "worlds";
 
     private final WorldProtectPlugin plugin;
-    private final LibApi lib;
     private WorldConfigStore worldConfigs;
     private EditModeTracker editModes;
     private WorldManagerIntegration worldManager;
-    private EditCommand editCommand;
-    private WorldProtectApi worldProtectApi;
+    private WorldProtectSettings settings;
 
     /**
      * Creates the lifecycle module from Lib-provided dependencies.
      *
      * @param plugin plugin entry point
-     * @param lib shared Lib service
      */
-    public WorldProtectLifecycle(WorldProtectPlugin plugin, LibApi lib) {
+    public WorldProtectLifecycle(WorldProtectPlugin plugin) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
-        this.lib = Objects.requireNonNull(lib, "lib");
     }
 
     /**
@@ -61,6 +54,7 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle {
     @Override
     public void enable() {
         ConfigurationState configuration = loadConfiguration();
+        settings = configuration.settings();
         worldConfigs = new WorldConfigStore(
                 plugin.getLogger(),
                 configuration.settings().worldDefaults(),
@@ -73,42 +67,10 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle {
                 plugin
         );
 
-        PluginCommand editPluginCommand = plugin.getCommand("edit");
-        if (editPluginCommand == null) {
-            throw new IllegalStateException("edit command is missing from plugin.yml");
-        }
-        CommandRouter editRouter = lib.createCommandRouter(plugin, "edit");
-        editCommand = new EditCommand(
-                configuration.settings(),
-                editModes,
-                worldConfigs,
-                worldManager
-        );
-        editRouter.registerDefault(editCommand);
-        editPluginCommand.setExecutor(editRouter);
-        editPluginCommand.setTabCompleter(editRouter);
-
-        PluginCommand worldProtectPluginCommand = plugin.getCommand("worldprotect");
-        if (worldProtectPluginCommand == null) {
-            throw new IllegalStateException("worldprotect command is missing from plugin.yml");
-        }
-        CommandRouter worldProtectRouter = lib.createCommandRouter(plugin, "worldprotect");
-        worldProtectRouter.register(new ReloadCommand(plugin));
-        worldProtectPluginCommand.setExecutor(worldProtectRouter);
-        worldProtectPluginCommand.setTabCompleter(worldProtectRouter);
-
         for (World world : Bukkit.getWorlds()) {
             worldConfigs.load(world, worldManager.logicalNameOrBukkitName(world));
         }
 
-        WorldProtectService service = new WorldProtectService(worldConfigs);
-        plugin.getServer().getServicesManager().register(
-                WorldProtectApi.class,
-                service,
-                plugin,
-                ServicePriority.Normal
-        );
-        worldProtectApi = service;
         plugin.getLogger().info("WorldProtect enabled with per-world protection configuration.");
     }
 
@@ -125,13 +87,9 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle {
      */
     @Override
     public void disable() {
-        if (worldProtectApi != null) {
-            plugin.getServer().getServicesManager().unregister(WorldProtectApi.class, worldProtectApi);
-        }
         if (editModes != null) editModes.clear();
         if (worldConfigs != null) worldConfigs.clear();
-        worldProtectApi = null;
-        editCommand = null;
+        settings = null;
         worldManager = null;
         editModes = null;
         worldConfigs = null;
@@ -142,6 +100,7 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle {
      */
     public void reloadConfiguration() {
         ConfigurationState configuration = loadConfiguration();
+        settings = configuration.settings();
         Objects.requireNonNull(worldConfigs, "WorldProtect world configuration is unavailable").reload(
                 configuration.settings().worldDefaults(),
                 configuration.fileResolver(),
@@ -149,8 +108,47 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle {
                 Objects.requireNonNull(worldManager, "WorldManager integration is unavailable")
                         ::logicalNameOrBukkitName
         );
-        Objects.requireNonNull(editCommand, "WorldProtect edit command is unavailable")
-                .updateSettings(configuration.settings());
+    }
+
+    /**
+     * Returns the active global settings to annotation-driven commands.
+     *
+     * @return active settings
+     */
+    public WorldProtectSettings settings() {
+        return Objects.requireNonNull(settings, "WorldProtect settings are unavailable");
+    }
+
+    /**
+     * Returns the in-memory edit state.
+     *
+     * @return edit mode tracker
+     */
+    public EditModeTracker editModes() {
+        return Objects.requireNonNull(editModes, "WorldProtect edit modes are unavailable");
+    }
+
+    /**
+     * Returns the per-world configuration store.
+     *
+     * @return world configuration store
+     */
+    public WorldConfigStore worldConfigs() {
+        return Objects.requireNonNull(worldConfigs, "WorldProtect world configurations are unavailable");
+    }
+
+    /**
+     * Returns the optional WorldManager integration.
+     *
+     * @return WorldManager integration
+     */
+    public WorldManagerIntegration worldManager() {
+        return Objects.requireNonNull(worldManager, "WorldManager integration is unavailable");
+    }
+
+    @Override
+    public Optional<WorldProtectionPolicy> find(World world) {
+        return worldConfigs().findPolicy(world);
     }
 
     private ConfigurationState loadConfiguration() {

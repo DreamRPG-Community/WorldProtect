@@ -63,14 +63,20 @@ public final class WorldProtectListener implements Listener {
         worldConfigs.unload(event.getWorld());
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBlockPlace(BlockPlaceEvent event) {
         WorldProtectionRules rules = worldConfigs.get(event.getBlock().getWorld());
         if (!rules.blockPlace() || editModes.isEnabled(event.getPlayer().getUniqueId())) return;
         event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBlockBreak(BlockBreakEvent event) {
         WorldProtectionRules rules = worldConfigs.get(event.getBlock().getWorld());
         if (!rules.blockBreak() || editModes.isEnabled(event.getPlayer().getUniqueId())) return;
@@ -79,7 +85,10 @@ public final class WorldProtectListener implements Listener {
 
     // Numeric block IDs match the block identifiers accepted by the configuration.
     @SuppressWarnings("deprecation")
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (!event.hasBlock()) return;
         WorldProtectionRules rules = worldConfigs.get(event.getPlayer().getWorld());
@@ -91,27 +100,42 @@ public final class WorldProtectListener implements Listener {
         event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBucketFill(PlayerBucketFillEvent event) {
         denyBucket(event.getPlayer(), event.getPlayer().getWorld(), event);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBucketEmpty(PlayerBucketEmptyEvent event) {
         denyBucket(event.getPlayer(), event.getPlayer().getWorld(), event);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onLeavesDecay(LeavesDecayEvent event) {
         if (worldConfigs.get(event.getBlock().getWorld()).leafDecay()) event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBlockFade(BlockFadeEvent event) {
         if (worldConfigs.get(event.getBlock().getWorld()).blockFade()) event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBlockIgnite(BlockIgniteEvent event) {
         WorldProtectionRules rules = worldConfigs.get(event.getBlock().getWorld());
         boolean protectedCause = event.getCause() == BlockIgniteEvent.IgniteCause.SPREAD
@@ -120,7 +144,10 @@ public final class WorldProtectListener implements Listener {
         if (protectedCause) event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBlockSpread(BlockSpreadEvent event) {
         if (event.getNewState().getType() == Material.FIRE
                 && worldConfigs.get(event.getBlock().getWorld()).fireSpread()) {
@@ -128,22 +155,34 @@ public final class WorldProtectListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBlockBurn(BlockBurnEvent event) {
         if (worldConfigs.get(event.getBlock().getWorld()).fireSpread()) event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onEntityExplode(EntityExplodeEvent event) {
         if (worldConfigs.get(event.getLocation().getWorld()).explosions()) event.blockList().clear();
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onBlockExplode(BlockExplodeEvent event) {
         if (worldConfigs.get(event.getBlock().getWorld()).explosions()) event.blockList().clear();
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         if (!isNaturalSpawn(event.getSpawnReason())) return;
         if (worldConfigs.get(event.getLocation().getWorld()).naturalMobSpawning()) {
@@ -151,21 +190,30 @@ public final class WorldProtectListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onFallDamage(EntityDamageEvent event) {
         if (event.getEntityType() != EntityType.PLAYER
                 || event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
         if (worldConfigs.get(event.getEntity().getWorld()).fallDamage()) event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (event.getEntityType() != EntityType.ENDER_PEARL
                 || !(event.getEntity().getShooter() instanceof Player player)) return;
         if (worldConfigs.get(player.getWorld()).enderPearl()) event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(
+            priority = EventPriority.HIGHEST,
+            ignoreCancelled = true
+    )
     public void onCommand(PlayerCommandPreprocessEvent event) {
         WorldProtectionRules rules = worldConfigs.get(event.getPlayer().getWorld());
         String command = commandName(event.getMessage());

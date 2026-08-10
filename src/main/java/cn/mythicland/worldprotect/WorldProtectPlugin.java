@@ -21,6 +21,7 @@ public final class WorldProtectPlugin extends JavaPlugin {
      * Starts the Lib-managed WorldProtect component graph.
      */
     @Override
+    @SuppressWarnings("resource")
     public void onEnable() {
         try {
             LibApi lib = LibApi.require(this);

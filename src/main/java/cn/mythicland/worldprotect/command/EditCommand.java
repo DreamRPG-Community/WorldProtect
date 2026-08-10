@@ -1,21 +1,19 @@
 package cn.mythicland.worldprotect.command;
 
-import cn.mythicland.lib.command.CommandUsageException;
-import cn.mythicland.lib.command.Subcommand;
+import cn.mythicland.lib.bootstrap.annotation.CommandComponent;
+import cn.mythicland.lib.bootstrap.annotation.CommandHandler;
+import cn.mythicland.lib.command.CommandContext;
 import cn.mythicland.lib.command.VanillaCommandMessages;
-import cn.mythicland.worldprotect.config.WorldProtectSettings;
-import cn.mythicland.worldprotect.integration.worldmanager.WorldManagerIntegration;
-import cn.mythicland.worldprotect.service.EditModeTracker;
-import cn.mythicland.worldprotect.storage.WorldConfigStore;
-import org.bukkit.command.CommandSender;
+import cn.mythicland.worldprotect.bootstrap.WorldProtectLifecycle;
 import org.bukkit.entity.Player;
 
-import java.util.List;
+import java.util.Objects;
 
 /**
  * Toggles temporary building mode for a player.
  */
-public final class EditCommand implements Subcommand {
+@CommandComponent("edit")
+public final class EditCommand {
 
     private static final String ONLY_PLAYER_MESSAGE = VanillaCommandMessages.red("该命令只能由玩家执行。");
     private static final String ENABLED_MESSAGE = VanillaCommandMessages.green("建筑模式已开启。");
@@ -25,54 +23,34 @@ public final class EditCommand implements Subcommand {
                     "检测到您安装了 WorldManager 插件, 请在重启前保存您的地图改动。 \n"
                             + "使用 /worldmanager save %world% 以保存世界更改。"
             );
-    private final EditModeTracker editModes;
-    private final WorldConfigStore worldConfigs;
-    private final WorldManagerIntegration worldManager;
-    private WorldProtectSettings settings;
 
-    public EditCommand(
-            WorldProtectSettings settings,
-            EditModeTracker editModes,
-            WorldConfigStore worldConfigs,
-            WorldManagerIntegration worldManager
-    ) {
-        this.settings = settings;
-        this.editModes = editModes;
-        this.worldConfigs = worldConfigs;
-        this.worldManager = worldManager;
+    private final WorldProtectLifecycle lifecycle;
+
+    public EditCommand(WorldProtectLifecycle lifecycle) {
+        this.lifecycle = Objects.requireNonNull(lifecycle, "lifecycle");
     }
 
-    public void updateSettings(WorldProtectSettings newSettings) {
-        this.settings = newSettings;
+    /**
+     * Supplies the configurable edit permission to Lib's command router.
+     *
+     * @return current edit permission
+     */
+    public String editPermission() {
+        return lifecycle.settings().editPermission();
     }
 
-    @Override
-    public String name() {
-        return "edit";
-    }
-
-    @Override
-    public String usage() {
-        return "/edit";
-    }
-
-    @Override
-    public String permission() {
-        return settings.editPermission();
-    }
-
-    @Override
-    public void execute(CommandSender sender, List<String> arguments) {
-        if (!arguments.isEmpty()) throw new CommandUsageException(usage());
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(ONLY_PLAYER_MESSAGE);
+    @CommandHandler(permissionMethod = "editPermission")
+    void edit(CommandContext context) {
+        context.requireArguments(0);
+        if (!(context.sender() instanceof Player player)) {
+            context.sender().sendMessage(ONLY_PLAYER_MESSAGE);
             return;
         }
 
-        boolean enabled = editModes.toggle(player.getUniqueId());
+        boolean enabled = lifecycle.editModes().toggle(player.getUniqueId());
         player.sendMessage(enabled ? ENABLED_MESSAGE : DISABLED_MESSAGE);
-        if (enabled && worldManager.isEnabled()) {
-            String worldName = worldConfigs.logicalName(player.getWorld());
+        if (enabled && lifecycle.worldManager().isEnabled()) {
+            String worldName = lifecycle.worldConfigs().logicalName(player.getWorld());
             player.sendMessage(SAVE_REMINDER_TEMPLATE.replace("%world%", worldName));
         }
     }
