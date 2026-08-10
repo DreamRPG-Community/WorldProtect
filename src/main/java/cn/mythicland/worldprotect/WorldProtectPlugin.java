@@ -2,7 +2,6 @@ package cn.mythicland.worldprotect;
 
 import cn.mythicland.lib.api.LibApi;
 import cn.mythicland.lib.bootstrap.PluginBootstrap;
-import cn.mythicland.worldprotect.bootstrap.WorldProtectLifecycle;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Objects;
@@ -50,8 +49,6 @@ public final class WorldProtectPlugin extends JavaPlugin {
      * Reloads the mutable WorldProtect configuration for the existing command binding.
      */
     public void reloadWorldProtect() {
-        Objects.requireNonNull(bootstrap, "WorldProtect bootstrap is unavailable")
-                .resolve(WorldProtectLifecycle.class)
-                .reloadConfiguration();
+        Objects.requireNonNull(bootstrap, "WorldProtect bootstrap is unavailable").reload();
     }
 }

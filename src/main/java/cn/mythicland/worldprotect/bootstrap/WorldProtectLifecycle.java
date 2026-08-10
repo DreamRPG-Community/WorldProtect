@@ -3,10 +3,10 @@ package cn.mythicland.worldprotect.bootstrap;
 import cn.mythicland.lib.bootstrap.LibPluginLifecycle;
 import cn.mythicland.lib.bootstrap.annotation.LifecycleComponent;
 import cn.mythicland.lib.bootstrap.annotation.ServiceComponent;
-import cn.mythicland.lib.config.ConfigSupport;
 import cn.mythicland.worldprotect.WorldProtectPlugin;
 import cn.mythicland.worldprotect.api.WorldProtectApi;
 import cn.mythicland.worldprotect.api.WorldProtectionPolicy;
+import cn.mythicland.worldprotect.config.WorldProtectConfiguration;
 import cn.mythicland.worldprotect.config.WorldProtectSettings;
 import cn.mythicland.worldprotect.integration.worldmanager.WorldManagerIntegration;
 import cn.mythicland.worldprotect.listener.WorldProtectListener;
@@ -15,7 +15,6 @@ import cn.mythicland.worldprotect.storage.WorldConfigFileResolver;
 import cn.mythicland.worldprotect.storage.WorldConfigStore;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,6 +33,7 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
     private static final String DEFAULT_WORLD_CONFIG_DIRECTORY = "worlds";
 
     private final WorldProtectPlugin plugin;
+    private final WorldProtectConfiguration configuration;
     private WorldConfigStore worldConfigs;
     private EditModeTracker editModes;
     private WorldManagerIntegration worldManager;
@@ -44,8 +44,12 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
      *
      * @param plugin plugin entry point
      */
-    public WorldProtectLifecycle(WorldProtectPlugin plugin) {
+    public WorldProtectLifecycle(
+            WorldProtectPlugin plugin,
+            WorldProtectConfiguration configuration
+    ) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
+        this.configuration = Objects.requireNonNull(configuration, "configuration");
     }
 
     /**
@@ -53,12 +57,12 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
      */
     @Override
     public void enable() {
-        ConfigurationState configuration = loadConfiguration();
-        settings = configuration.settings();
+        ConfigurationState current = loadConfiguration();
+        settings = current.settings();
         worldConfigs = new WorldConfigStore(
                 plugin.getLogger(),
-                configuration.settings().worldDefaults(),
-                configuration.fileResolver()
+                current.settings().worldDefaults(),
+                current.fileResolver()
         );
         editModes = new EditModeTracker();
         worldManager = new WorldManagerIntegration(plugin);
@@ -99,11 +103,11 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
      * Reloads configuration for the existing protection graph.
      */
     public void reloadConfiguration() {
-        ConfigurationState configuration = loadConfiguration();
-        settings = configuration.settings();
+        ConfigurationState current = loadConfiguration();
+        settings = current.settings();
         Objects.requireNonNull(worldConfigs, "WorldProtect world configuration is unavailable").reload(
-                configuration.settings().worldDefaults(),
-                configuration.fileResolver(),
+                current.settings().worldDefaults(),
+                current.fileResolver(),
                 Bukkit.getWorlds(),
                 Objects.requireNonNull(worldManager, "WorldManager integration is unavailable")
                         ::logicalNameOrBukkitName
@@ -152,8 +156,7 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
     }
 
     private ConfigurationState loadConfiguration() {
-        FileConfiguration configuration = ConfigSupport.loadDefault(plugin);
-        WorldProtectSettings settings = WorldProtectSettings.load(plugin, configuration);
+        WorldProtectSettings settings = configuration.snapshot();
         Path configRoot = resolveWorldConfigRoot(settings.worldConfigDirectory());
         WorldConfigFileResolver fileResolver = new WorldConfigFileResolver(configRoot);
         try {
@@ -173,14 +176,14 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
         try {
             relativeDirectory = Path.of(configuredDirectory);
         } catch (InvalidPathException exception) {
-            return resetWorldConfigDirectory(pluginDataDirectory, exception.getMessage());
+            return fallbackWorldConfigDirectory(pluginDataDirectory, exception.getMessage());
         }
 
         if (relativeDirectory.isAbsolute()
                 || relativeDirectory.getNameCount() != 1
                 || relativeDirectory.getFileName().toString().equals(".")
                 || relativeDirectory.getFileName().toString().equals("..")) {
-            return resetWorldConfigDirectory(
+            return fallbackWorldConfigDirectory(
                     pluginDataDirectory,
                     "world-config-directory must be one relative directory segment"
             );
@@ -188,21 +191,19 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
 
         Path root = pluginDataDirectory.resolve(relativeDirectory).normalize();
         if (!root.startsWith(pluginDataDirectory) || root.equals(pluginDataDirectory)) {
-            return resetWorldConfigDirectory(pluginDataDirectory, "directory escapes the plugin data folder");
+            return fallbackWorldConfigDirectory(pluginDataDirectory, "directory escapes the plugin data folder");
         }
         if (Files.isSymbolicLink(root)) {
-            return resetWorldConfigDirectory(pluginDataDirectory, "directory cannot be a symbolic link");
+            return fallbackWorldConfigDirectory(pluginDataDirectory, "directory cannot be a symbolic link");
         }
         return root;
     }
 
-    private Path resetWorldConfigDirectory(Path pluginDataDirectory, String reason) {
+    private Path fallbackWorldConfigDirectory(Path pluginDataDirectory, String reason) {
         plugin.getLogger().warning(
                 "Invalid world-config-directory: " + reason + "; resetting to '"
-                        + DEFAULT_WORLD_CONFIG_DIRECTORY + "'."
+                        + DEFAULT_WORLD_CONFIG_DIRECTORY + "' for this configuration snapshot."
         );
-        plugin.getConfig().set("world-config-directory", DEFAULT_WORLD_CONFIG_DIRECTORY);
-        plugin.saveConfig();
         return pluginDataDirectory.resolve(DEFAULT_WORLD_CONFIG_DIRECTORY).normalize();
     }
 

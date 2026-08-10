@@ -50,6 +50,11 @@ public final class WorldProtectListener implements Listener {
         this.worldManager = worldManager;
     }
 
+    private static boolean isNaturalSpawn(CreatureSpawnEvent.SpawnReason reason) {
+        return reason == CreatureSpawnEvent.SpawnReason.NATURAL
+                || reason == CreatureSpawnEvent.SpawnReason.CHUNK_GEN;
+    }
+
     @EventHandler
     public void onWorldLoad(WorldLoadEvent event) {
         worldConfigs.load(
@@ -235,11 +240,6 @@ public final class WorldProtectListener implements Listener {
 
     private void denyAction(Player player) {
         player.sendMessage(ACTION_DENIED_MESSAGE);
-    }
-
-    private static boolean isNaturalSpawn(CreatureSpawnEvent.SpawnReason reason) {
-        return reason == CreatureSpawnEvent.SpawnReason.NATURAL
-                || reason == CreatureSpawnEvent.SpawnReason.CHUNK_GEN;
     }
 
     private String commandName(String message) {
