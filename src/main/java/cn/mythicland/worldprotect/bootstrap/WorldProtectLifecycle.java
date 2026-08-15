@@ -155,6 +155,11 @@ public final class WorldProtectLifecycle implements LibPluginLifecycle, WorldPro
         return worldConfigs().findPolicy(world);
     }
 
+    @Override
+    public boolean isEditMode(java.util.UUID playerId) {
+        return editModes().isEnabled(Objects.requireNonNull(playerId, "playerId"));
+    }
+
     private ConfigurationState loadConfiguration() {
         WorldProtectSettings settings = configuration.snapshot();
         Path configRoot = resolveWorldConfigRoot(settings.worldConfigDirectory());

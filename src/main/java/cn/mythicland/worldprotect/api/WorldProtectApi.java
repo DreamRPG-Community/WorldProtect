@@ -3,6 +3,7 @@ package cn.mythicland.worldprotect.api;
 import org.bukkit.World;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Read-only WorldProtect service exposed through Bukkit's service manager.
@@ -21,4 +22,12 @@ public interface WorldProtectApi {
      * the active WorldProtect instance
      */
     Optional<WorldProtectionPolicy> find(World world);
+
+    /**
+     * Returns whether a player has enabled the temporary {@code /edit} building mode.
+     *
+     * @param playerId player UUID to inspect
+     * @return true when the player's edit mode is enabled
+     */
+    boolean isEditMode(UUID playerId);
 }
